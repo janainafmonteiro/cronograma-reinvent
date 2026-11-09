@@ -1,7 +1,7 @@
 import {useState,useRef} from 'react';
-import {Undo2,Sparkles,MoreVertical,CalendarDays,ListChecks,Map as MapI,MessageCircle,Route} from 'lucide-react';
+import {Undo2,Sparkles,MoreVertical,CalendarDays,ListChecks,Map as MapI,MessageCircle,Route,User} from 'lucide-react';
 import {useStore} from './store';import {coordsFor,casinoTax,gmap,nid} from './data';import {getCfg,setCfg,chatAI,analyzeAI} from './ai';
-import Itinerary from './Itinerary';import Wishlist from './Wishlist';import MapView from './MapView';import RouteView from './RouteView';import {Sheet,EditSheet,ChatSheet,KeySheet} from './Sheets';
+import Itinerary from './Itinerary';import Wishlist from './Wishlist';import MapView from './MapView';import RouteView from './RouteView';import Profile from './Profile';import {localAnalyze} from './local';import {Sheet,EditSheet,ChatSheet,KeySheet} from './Sheets';
 const dayKeys={domingo:'d29',segunda:'d30',terça:'d01',terca:'d01',quarta:'d02',quinta:'d03',sexta:'d04',sábado:'d28',sabado:'d28'};
 function parse(txt,days){const s=txt.toLowerCase();let did=null;for(const k in dayKeys)if(s.includes(k)){did=dayKeys[k];break}
   const m=s.match(/dia (\d{1,2})/);if(!did&&m){const f=days.find(d=>d.label.includes(' '+m[1].padStart(2,'0')+' '));if(f)did=f.id}
@@ -27,10 +27,11 @@ export default function App(){
   const tt=(x,u=true)=>{setToast({x,u});setTimeout(()=>setToast(null),4000)};
   const ck2=()=>{ck();setAn('idle')};
   const nSug=days.reduce((a,d)=>a+d.ev.filter(e=>e.tn&&e.tn!==e.t).length,0);
-  const analyze=async()=>{setAn('loading');if(!getCfg().key){setTimeout(()=>setAn('done'),2200);return}
-    try{const r=await analyzeAI(ref.current.days),m=Object.fromEntries((r.items||[]).map(i=>[i.id,i]));
-      upd(p=>({...p,days:p.days.map(d=>({...d,ev:d.ev.map(e=>{const i=m[e.id];if(!i)return e;return{...e,m:i.streetMin??e.m,c:i.innerMin??e.c,tn:i.time&&i.time!==e.t?i.time:null,n:i.status==='ok'?null:[i.status==='bad'?'bad':'warn',i.note||'']}})}))}));setAn('done')}
-    catch(e){setAn('idle');tt('Falha na IA: '+e.message.slice(0,90),false)}};
+  const analyze=async()=>{setAn('loading');let items=null,why='';
+    if(getCfg().key){try{items=(await analyzeAI(ref.current.days)).items}catch(e){why=e.message}}
+    if(!items){items=localAnalyze(ref.current.days);if(why)tt(`${why.slice(0,70)}. Usei o cálculo local com seus cards atuais.`,false)}
+    const m=Object.fromEntries(items.map(i=>[i.id,i]));
+    upd(p=>({...p,days:p.days.map(d=>({...d,ev:d.ev.map(e=>{const i=m[e.id];if(!i)return e;return{...e,m:i.streetMin??e.m,c:i.innerMin??e.c,tn:i.time&&i.time!==e.t?i.time:null,n:i.status==='ok'?null:[i.status==='bad'?'bad':'warn',i.note||'']}})}))}));setAn('done')};
   const applyTimes=()=>{upd(p=>({...p,days:p.days.map(d=>({...d,ev:d.ev.map(e=>e.tn&&e.tn!==e.t?{...e,t:e.tn,tn:null}:e)}))}));tt('Horários aplicados')};
   const del=id=>{setAn('idle');upd(p=>({...p,days:p.days.map(d=>({...d,ev:d.ev.filter(e=>e.id!==id)}))}));tt('Card excluído')};
   const save=()=>{const o=ed.old,n={...ed.e,m:ed.e.m===''||ed.e.m==null?null:+ed.e.m,c:+ed.e.c||0};setAn('idle');
@@ -44,13 +45,13 @@ export default function App(){
     if(getCfg().key){try{const r=await chatAI(q,mr.current.slice(-6),ref.current.days);
         if(r.actions?.length){upd(p=>({...p,days:applyActions(p.days,r.actions)}));setAn('idle')}
         setMsgs(m=>[...m,{r:'ai',x:r.reply||'Pronto!'}])}
-      catch(e){setMsgs(m=>[...m,{r:'ai',x:'Não consegui falar com o Gemini: '+e.message}])}
+      catch(e){setMsgs(m=>[...m,{r:'ai',x:'Não consegui falar com o Gemini ('+e.message+'). Tentei os modelos reserva também. Tente de novo em instantes.'}])}
       setTyping(false);return}
     setTimeout(()=>{setTyping(false);const pd=pend.current;
       if(pd){const pick=/escolh|decid|melhor|tanto faz/.test(q.toLowerCase());pend.current=null;addSim(pd,pick?(pd.meal?'Grand Lux Cafe · The Venetian':'The Palazzo · Lower Terrace'):q,pick);return}
       const p=parse(q,ref.current.days);if(p.pick)addSim(p,p.meal?'Grand Lux Cafe · The Venetian':'The Palazzo · Lower Terrace',true);
       else{pend.current=p;setMsgs(m=>[...m,{r:'ai',x:'Qual é o local do evento? (Ou diga “escolha você” e eu sugiro o melhor.)'}])}},900)};
-  const tabs=[['rot','Roteiro',CalendarDays],['rota','Rota',Route],['lista','Lista',ListChecks],['mapa','Mapa',MapI]];
+  const tabs=[['rot','Roteiro',CalendarDays],['rota','Rota',Route],['lista','Lista',ListChecks],['mapa','Mapa',MapI],['perfil','Perfil',User]];
   return <div className="max-w-md mx-auto text-white min-h-dvh" style={{paddingBottom:'calc(96px + env(safe-area-inset-bottom,0px))'}}>
     {v!=='rota'&&<header className="sticky top-0 z-20 bg-ink/95 backdrop-blur px-4 flex items-center gap-2 border-b border-card2" style={{height:'calc(56px + env(safe-area-inset-top,0px))',paddingTop:'env(safe-area-inset-top,0px)'}}>
       <div className="flex-1 min-w-0"><div className="text-[10px] font-extrabold tracking-widest text-pink truncate">RE:INVENT 2026 · BASE: TREASURE ISLAND</div><div className="text-lg font-extrabold leading-tight">Meu roteiro</div></div>
@@ -61,6 +62,7 @@ export default function App(){
     {v==='rot'&&<Itinerary days={days} setDays={f=>setS(p=>({...p,days:f(p.days)}))} ck={ck2} an={an} fresh={fresh} onEdit={e=>setEd({old:e.ti,e})} onDel={del} onMap={toMap}/>}
     {v==='rota'&&<RouteView days={days}/>}
     {v==='lista'&&<Wishlist S={S} upd={upd}/>}
+    {v==='perfil'&&<Profile/>}
     {v==='mapa'&&<MapView days={days} focus={focus}/>}
     {v==='rot'&&<button aria-label="Abrir assistente" onClick={()=>setChat(true)} className="fixed right-4 z-30 w-14 h-14 rounded-full bg-peach text-ink flex items-center justify-center shadow-xl" style={{bottom:'calc(88px + env(safe-area-inset-bottom,0px))'}}><MessageCircle/></button>}
     <nav className={`fixed inset-x-0 bottom-0 z-30 border-t border-card2 ${v==='rota'?'bg-ink/80 backdrop-blur':'bg-ink'}`} style={{paddingBottom:'env(safe-area-inset-bottom,0px)'}}><div className="max-w-md mx-auto flex">{tabs.map(([k,l,Ic])=><button key={k} onClick={()=>setV(k)} aria-current={v===k} className={`flex-1 h-16 flex flex-col items-center justify-center gap-0.5 text-xs font-extrabold ${v===k?'text-pink':'text-mute'}`}><Ic size={22}/>{l}</button>)}</div></nav>
