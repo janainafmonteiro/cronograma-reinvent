@@ -11,7 +11,7 @@ function Day({d,children}){
         {d.ev.length===0&&<div className="rounded-3xl border-2 border-dashed border-card2 text-mute text-sm text-center py-5">Solte um card aqui</div>}</div>
     </SortableContext></section>;
 }
-export default function Itinerary({days,setDays,ck,an,fresh,onEdit,onDel,onMap}){
+export default function Itinerary({days,setDays,ck,an,fresh,onEdit,onDel,onMap,onDetail}){
   const [open,setOpen]=useState(null),[act,setAct]=useState(null),[cur,setCur]=useState(days[0].id);
   const sensors=useSensors(useSensor(PointerSensor,{activationConstraint:{distance:4}}));
   const find=id=>days.find(d=>d.id===id||d.ev.some(e=>e.id===id));
@@ -28,7 +28,7 @@ export default function Itinerary({days,setDays,ck,an,fresh,onEdit,onDel,onMap})
       {days.map(d=><button key={d.id} onClick={()=>document.getElementById(d.id).scrollIntoView({behavior:'smooth'})} className={`shrink-0 h-10 px-4 rounded-full text-sm font-extrabold ${cur===d.id?'bg-pink text-ink':'bg-card text-lilac'}`}>{d.label.slice(0,6)}</button>)}</nav>
     <p className="px-4 pt-2 text-xs text-mute"><span className="rounded-full bg-pink text-ink px-1.5 py-0.5 font-extrabold text-[10px]">SWAG</span> Brilho rosa = brindes. Toque no card para ver ações; segure a alça para arrastar.</p>
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={e=>{ck();setAct(e.active.id)}} onDragOver={over} onDragEnd={end} onDragCancel={()=>setAct(null)}>
-      <main className="px-4">{days.map(d=><Day key={d.id} d={d}>{d.ev.map(e=><SortableCard key={e.id} e={e} an={an} fresh={fresh===e.id} open={open===e.id} onToggle={()=>setOpen(open===e.id?null:e.id)} onEdit={()=>onEdit(e)} onDel={()=>onDel(e.id)} onMap={()=>onMap(e)}/>)}</Day>)}</main>
+      <main className="px-4">{days.map(d=><Day key={d.id} d={d}>{d.ev.map(e=><SortableCard key={e.id} e={e} an={an} fresh={fresh===e.id} open={open===e.id} onToggle={()=>setOpen(open===e.id?null:e.id)} onEdit={()=>onEdit(e)} onDel={()=>onDel(e.id)} onMap={()=>onMap(e)} onDetail={()=>onDetail(e)}/>)}</Day>)}</main>
       <DragOverlay>{ae&&<CardView e={ae} an={an} handle={{}} style={{transform:'rotate(2deg)'}}/>}</DragOverlay>
     </DndContext></>;
 }

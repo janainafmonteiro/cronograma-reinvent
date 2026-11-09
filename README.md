@@ -32,3 +32,9 @@ Tudo é salvo no aparelho (localStorage). Menu ⋮: voltar ao original / salvar 
 - **Chat**: aceita adicionar, mover, editar e excluir (“coloque a foto na placa depois do helicóptero”) e ajusta os horários afetados.
 - **Rota**: escolha o dia e use ← → para ver cada trecho (hotel → 1º evento → … → hotel) com o tracejado a pé. O caminho vem do roteador de pedestres do OpenStreetMap (precisa de internet; offline mostra linha reta). Trechos já vistos ficam em cache.
 - Aviso: a chave fica no navegador do seu celular; use uma chave só para este app e restrinja pelo referrer do seu site.
+
+## Aba "Eu" e detalhes dos cards
+- **Detalhes** (dentro do card expandido): reservas/ingressos ligados ao evento (fotos e PDF, salvos offline no IndexedDB) e dicas de inglês B1 da situação; com Gemini há o botão "Mais frases".
+- **Eu › Hoje**: copos de água, passos (meta 15.000) e gasto do dia vs. limite Wise. Metas editáveis na engrenagem.
+- **Eu › Minhas coisas**: Cofre offline, Gastos, Quem é quem (até 2 fotos por pessoa e mensagem de follow-up), Pitch e inglês (pitches e termos editáveis) e Meu QR.
+- Dados e anexos ficam só no aparelho. Limpar os dados do navegador apaga tudo: faça prints/backup dos documentos importantes antes de viajar.
