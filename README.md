@@ -38,3 +38,7 @@ Tudo é salvo no aparelho (localStorage). Menu ⋮: voltar ao original / salvar 
 - **Eu › Hoje**: copos de água, passos (meta 15.000) e gasto do dia vs. limite Wise. Metas editáveis na engrenagem.
 - **Eu › Minhas coisas**: Cofre offline, Gastos, Quem é quem (até 2 fotos por pessoa e mensagem de follow-up), Pitch e inglês (pitches e termos editáveis) e Meu QR.
 - Dados e anexos ficam só no aparelho. Limpar os dados do navegador apaga tudo: faça prints/backup dos documentos importantes antes de viajar.
+
+## Offline
+- Aba **Rota** › botão **Offline** (topo): salva o mapa da região (Strip, Allegiant, aeroporto) e o caminho a pé de todos os trechos do roteiro atual. Refaça se mudar o roteiro.
+- O botão **Mapa** do card abre a Rota já no trecho que termina naquele evento.

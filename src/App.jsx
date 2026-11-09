@@ -1,7 +1,7 @@
 import {useState,useRef} from 'react';
-import {Undo2,Sparkles,MoreVertical,CalendarDays,ListChecks,Map as MapI,MessageCircle,Route,User} from 'lucide-react';
+import {Undo2,Sparkles,MoreVertical,CalendarDays,ListChecks,MessageCircle,Route,User} from 'lucide-react';
 import {useStore} from './store';import {coordsFor,casinoTax,gmap,nid} from './data';import {getCfg,setCfg,chatAI,analyzeAI} from './ai';
-import Itinerary from './Itinerary';import Wishlist from './Wishlist';import MapView from './MapView';import RouteView from './RouteView';import Hub from './Hub';import Detail from './Detail';import {useExtras} from './extras';import {localAnalyze} from './local';import {Sheet,EditSheet,ChatSheet,KeySheet} from './Sheets';
+import Itinerary from './Itinerary';import Wishlist from './Wishlist';import RouteView from './RouteView';import Hub from './Hub';import Detail from './Detail';import {useExtras} from './extras';import {localAnalyze} from './local';import {Sheet,EditSheet,ChatSheet,KeySheet} from './Sheets';
 const dayKeys={domingo:'d29',segunda:'d30',terça:'d01',terca:'d01',quarta:'d02',quinta:'d03',sexta:'d04',sábado:'d28',sabado:'d28'};
 function parse(txt,days){const s=txt.toLowerCase();let did=null;for(const k in dayKeys)if(s.includes(k)){did=dayKeys[k];break}
   const m=s.match(/dia (\d{1,2})/);if(!did&&m){const f=days.find(d=>d.label.includes(' '+m[1].padStart(2,'0')+' '));if(f)did=f.id}
@@ -22,7 +22,7 @@ function applyActions(days,acts){const D=days.map(d=>({...d,ev:[...d.ev]}));
   return D}
 export default function App(){
   const {S,setS,upd,ck,undo,reset,saveOrig,canUndo,ref}=useStore(),{days}=S,[X,setX]=useExtras(),[det,setDet]=useState(null);
-  const [v,setV]=useState('rot'),[an,setAn]=useState('idle'),[ed,setEd]=useState(null),[menu,setMenu]=useState(false),[chat,setChat]=useState(false),[key,setKey]=useState(false),[toast,setToast]=useState(null),[focus,setFocus]=useState(null),[fresh,setFresh]=useState(null);
+  const [v,setV]=useState('rot'),[an,setAn]=useState('idle'),[ed,setEd]=useState(null),[menu,setMenu]=useState(false),[chat,setChat]=useState(false),[key,setKey]=useState(false),[toast,setToast]=useState(null),[rt,setRt]=useState(null),[fresh,setFresh]=useState(null);
   const [msgs,setMsgs]=useState([{r:'ai',x:getCfg().key?'Oi! Peça o que quiser: adicionar, mover, editar ou excluir eventos. Ex: “coloque a foto na placa depois do helicóptero”.':'Oi! Configure a chave do Gemini no menu ⋮ para eu entender qualquer pedido. Sem ela, só sei adicionar eventos de forma simples.'}]),[typing,setTyping]=useState(false),pend=useRef(null),mr=useRef(msgs);mr.current=msgs;
   const tt=(x,u=true)=>{setToast({x,u});setTimeout(()=>setToast(null),4000)};
   const ck2=()=>{ck();setAn('idle')};
@@ -36,7 +36,7 @@ export default function App(){
   const del=id=>{setAn('idle');upd(p=>({...p,days:p.days.map(d=>({...d,ev:d.ev.filter(e=>e.id!==id)}))}));tt('Card excluído')};
   const save=()=>{const o=ed.old,n={...ed.e,m:ed.e.m===''||ed.e.m==null?null:+ed.e.m,c:+ed.e.c||0};setAn('idle');
     upd(p=>({days:p.days.map(d=>({...d,ev:d.ev.map(e=>e.id===n.id?{...e,...n}:e)})),wish:p.wish.map(w=>w.k===o?{...w,k:n.ti,name:n.ti}:w)}));setEd(null)};
-  const toMap=e=>{const c=coordsFor(e.loc);if(!c){window.open(gmap(e.loc),'_blank','noopener');return}setFocus({c,t:e.loc});setV('mapa')};
+  const toMap=e=>{if(!coordsFor(e.loc)){window.open(gmap(e.loc),'_blank','noopener');return}const d=ref.current.days.find(x=>x.ev.some(y=>y.id===e.id));setRt({day:d.id,ev:e.id,n:Date.now()});setV('rota')};
   const addSim=(p,loc,picked)=>{const ev={id:nid(),t:p.per[0],ti:p.ti+' (novo)',loc,m:picked?4:null,c:picked?casinoTax(loc):0,n:null,s:false};
     upd(S0=>({...S0,days:S0.days.map(x=>{if(x.id!==p.did)return x;const a=[...x.ev],i=a.findIndex(y=>y.t.slice(0,5)>p.per[0].slice(0,5));i<0?a.push(ev):a.splice(i,0,ev);return{...x,ev:a}})}));setAn('idle');
     setMsgs(m=>[...m,{r:'ai',x:`Pronto! Adicionei “${ev.ti}” às ${p.per[0]}, em ${loc}.`}]);setFresh(ev.id);setTimeout(()=>setFresh(null),2500);setChat(false);setV('rot');
@@ -51,7 +51,7 @@ export default function App(){
       if(pd){const pick=/escolh|decid|melhor|tanto faz/.test(q.toLowerCase());pend.current=null;addSim(pd,pick?(pd.meal?'Grand Lux Cafe · The Venetian':'The Palazzo · Lower Terrace'):q,pick);return}
       const p=parse(q,ref.current.days);if(p.pick)addSim(p,p.meal?'Grand Lux Cafe · The Venetian':'The Palazzo · Lower Terrace',true);
       else{pend.current=p;setMsgs(m=>[...m,{r:'ai',x:'Qual é o local do evento? (Ou diga “escolha você” e eu sugiro o melhor.)'}])}},900)};
-  const tabs=[['rot','Roteiro',CalendarDays],['rota','Rota',Route],['lista','Lista',ListChecks],['mapa','Mapa',MapI],['perfil','Eu',User]];
+  const tabs=[['rot','Roteiro',CalendarDays],['rota','Rota',Route],['lista','Lista',ListChecks],['perfil','Eu',User]];
   return <div className="max-w-md mx-auto text-white min-h-dvh" style={{paddingBottom:'calc(96px + env(safe-area-inset-bottom,0px))'}}>
     {v!=='rota'&&<header className="sticky top-0 z-20 bg-ink/95 backdrop-blur px-4 flex items-center gap-2 border-b border-card2" style={{height:'calc(56px + env(safe-area-inset-top,0px))',paddingTop:'env(safe-area-inset-top,0px)'}}>
       <div className="flex-1 min-w-0"><div className="text-[10px] font-extrabold tracking-widest text-pink truncate">RE:INVENT 2026 · BASE: TREASURE ISLAND</div><div className="text-lg font-extrabold leading-tight">Meu roteiro</div></div>
@@ -60,10 +60,9 @@ export default function App(){
       <button aria-label="Mais opções" onClick={()=>setMenu(true)} className="w-11 h-11 rounded-full bg-card text-lilac flex items-center justify-center"><MoreVertical size={20}/></button></header>}
     {v==='rot'&&nSug>0&&an==='done'&&<div className="mx-4 mt-3 rounded-3xl bg-card p-3 flex items-center gap-3 border-2 border-peach"><div className="flex-1 text-sm leading-snug"><b>{nSug}</b> card(s) com horário sugerido pela IA (veja “→” nos cards).</div><button onClick={applyTimes} className="h-11 px-4 rounded-full bg-peach text-ink font-extrabold text-sm">Aplicar</button></div>}
     {v==='rot'&&<Itinerary days={days} setDays={f=>setS(p=>({...p,days:f(p.days)}))} ck={ck2} an={an} fresh={fresh} onEdit={e=>setEd({old:e.ti,e})} onDel={del} onMap={toMap} onDetail={setDet}/>}
-    {v==='rota'&&<RouteView days={days}/>}
+    {v==='rota'&&<RouteView days={days} target={rt} onDone={()=>setRt(null)}/>}
     {v==='lista'&&<Wishlist S={S} upd={upd}/>}
-    {v==='perfil'&&<Hub X={X} setX={setX}/>}
-    {v==='mapa'&&<MapView days={days} focus={focus}/>}
+    {v==='perfil'&&<Hub X={X} setX={setX} days={days}/>}
     {v==='rot'&&<button aria-label="Abrir assistente" onClick={()=>setChat(true)} className="fixed right-4 z-30 w-14 h-14 rounded-full bg-peach text-ink flex items-center justify-center shadow-xl" style={{bottom:'calc(88px + env(safe-area-inset-bottom,0px))'}}><MessageCircle/></button>}
     <nav className={`fixed inset-x-0 bottom-0 z-30 border-t border-card2 ${v==='rota'?'bg-ink/80 backdrop-blur':'bg-ink'}`} style={{paddingBottom:'env(safe-area-inset-bottom,0px)'}}><div className="max-w-md mx-auto flex">{tabs.map(([k,l,Ic])=><button key={k} onClick={()=>setV(k)} aria-current={v===k} className={`flex-1 h-16 flex flex-col items-center justify-center gap-0.5 text-xs font-extrabold ${v===k?'text-pink':'text-mute'}`}><Ic size={22}/>{l}</button>)}</div></nav>
     {toast&&<div className="fixed left-4 right-4 z-40 max-w-md mx-auto rounded-3xl bg-lilac text-ink font-extrabold px-4 min-h-12 py-2 flex items-center justify-between gap-2 text-sm" style={{bottom:'calc(100px + env(safe-area-inset-bottom,0px))'}}><span>{toast.x}</span>{toast.u&&<button onClick={()=>{undo();setToast(null)}} className="h-11 px-3 underline shrink-0">Desfazer</button>}</div>}
