@@ -25,3 +25,10 @@ Tudo é salvo no aparelho (localStorage). Menu ⋮: voltar ao original / salvar 
 - `src/data.js` › `casinoTax()` é o ponto para somar 15–20 min ao tempo do Google Maps (idealmente via Gemini).
 - `src/App.jsx` › `parse()`/`send()` e `src/Wishlist.jsx` hoje são simulados; troque por chamadas a um back-end que guarde as chaves.
 - Coordenadas em `src/data.js` (PLACES) são aproximadas.
+
+## IA (Gemini) e Rota
+- Menu ⋮ › **Configurar IA (Gemini)**: cole sua chave (aistudio.google.com/apikey). Ela fica só no aparelho (localStorage), nunca no GitHub. O modelo padrão é `gemini-flash-latest` e pode ser trocado ali.
+- **Otimizar** (aba Roteiro): o Gemini estima deslocamentos (rua + “imposto de cassino”), marca Viável/Apertado/Inviável e sugere horários (“→ 14:35”) só para eventos flexíveis. Toque em **Aplicar** para aceitar; dá para desfazer.
+- **Chat**: aceita adicionar, mover, editar e excluir (“coloque a foto na placa depois do helicóptero”) e ajusta os horários afetados.
+- **Rota**: escolha o dia e use ← → para ver cada trecho (hotel → 1º evento → … → hotel) com o tracejado a pé. O caminho vem do roteador de pedestres do OpenStreetMap (precisa de internet; offline mostra linha reta). Trechos já vistos ficam em cache.
+- Aviso: a chave fica no navegador do seu celular; use uma chave só para este app e restrinja pelo referrer do seu site.

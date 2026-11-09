@@ -15,3 +15,11 @@ export function ChatSheet({msgs,typing,onSend,onClose}){
     <div className="flex gap-2 mt-3"><input value={t} onChange={e=>setT(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()} aria-label="Mensagem" placeholder="Ex: adicione um encontro na terça à tarde" className="flex-1 h-12 rounded-full bg-card2 px-4 text-[16px] text-white outline-none focus:ring-2 ring-lilac placeholder-mute"/>
     <button aria-label="Enviar" onClick={go} className="w-12 h-12 rounded-full bg-peach text-ink flex items-center justify-center"><Send size={20}/></button></div></Sheet>;
 }
+export function KeySheet({onClose,onSave,cfg}){
+  const [k,setK]=useState(cfg.key),[m,setM]=useState(cfg.model);
+  return <Sheet title="IA (Gemini)" onClose={onClose}>
+    <p className="text-xs text-mute mt-2 leading-snug">Crie uma chave em aistudio.google.com/apikey e cole abaixo. Ela fica só neste aparelho e nunca vai para o GitHub. Se possível, restrinja a chave ao seu site (Google Cloud › Credenciais › Restrições de HTTP referrer).</p>
+    <label className="block text-xs font-bold text-mute mt-3">Chave da API<input type="password" value={k} onChange={e=>setK(e.target.value)} autoComplete="off" className="mt-1 w-full h-12 rounded-2xl bg-card2 px-3 text-[16px] text-white outline-none focus:ring-2 ring-lilac"/></label>
+    <label className="block text-xs font-bold text-mute mt-3">Modelo<input value={m} onChange={e=>setM(e.target.value)} className="mt-1 w-full h-12 rounded-2xl bg-card2 px-3 text-[16px] text-white outline-none focus:ring-2 ring-lilac"/></label>
+    <button onClick={()=>onSave(k,m)} className="mt-3 w-full h-12 rounded-full bg-pink text-ink font-extrabold">Salvar</button></Sheet>;
+}

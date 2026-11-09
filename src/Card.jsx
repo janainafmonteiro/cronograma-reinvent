@@ -8,7 +8,7 @@ export function CardView({e,an,open,fresh,handle,onToggle,onEdit,onDel,onMap,sty
     <div className="flex">
       <button aria-label="Segurar e arrastar" {...handle} className="w-12 shrink-0 flex items-center justify-center text-mute touch-none cursor-grab"><GripVertical size={22}/></button>
       <button onClick={onToggle} aria-expanded={open} className="flex-1 min-w-0 text-left py-3 pr-2">
-        <div className="flex items-center gap-1.5 text-xs font-extrabold text-lilac flex-wrap">{e.t}
+        <div className="flex items-center gap-1.5 text-xs font-extrabold text-lilac flex-wrap">{e.t}{e.tn&&e.tn!==e.t&&<span className="text-peach">→ {e.tn}</span>}
           {e.s&&<span className="rounded-full bg-pink text-ink px-1.5 py-0.5 text-[10px]">SWAG</span>}
           {b&&<span className={`rounded-full px-2 py-0.5 text-[10px] ${b[0]}`}>{b[1]}</span>}</div>
         <div className="font-extrabold text-[15px] leading-tight mt-0.5">{e.ti}</div>
