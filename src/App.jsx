@@ -1,6 +1,6 @@
 import {useState,useRef} from 'react';
 import {Undo2,Sparkles,MoreVertical,CalendarDays,ListChecks,MessageCircle,Route,User} from 'lucide-react';
-import {useStore} from './store';import {coordsFor,casinoTax,gmap,nid} from './data';import {getCfg,setCfg,chatAI,analyzeAI} from './ai';
+import {useStore} from './store';import {coordsFor,casinoTax,gmap,nid,defState} from './data';import BackupSheet from './BackupSheet';import {getCfg,setCfg,chatAI,analyzeAI,exportText} from './ai';import {hardUpdate} from './update';
 import Itinerary from './Itinerary';import Wishlist from './Wishlist';import RouteView from './RouteView';import Hub from './Hub';import Detail from './Detail';import {useExtras} from './extras';import {localAnalyze} from './local';import {reflowAll,countChanged,isFlex} from './schedule';import {Sheet,EditSheet,ChatSheet,KeySheet} from './Sheets';
 const dayKeys={domingo:'d29',segunda:'d30',terça:'d01',terca:'d01',quarta:'d02',quinta:'d03',sexta:'d04',sábado:'d28',sabado:'d28'};
 function parse(txt,days){const s=txt.toLowerCase();let did=null;for(const k in dayKeys)if(s.includes(k)){did=dayKeys[k];break}
@@ -22,7 +22,7 @@ function applyActions(days,acts){const D=days.map(d=>({...d,ev:[...d.ev]}));
   return D}
 export default function App(){
   const {S,setS,upd,ck,undo,reset,saveOrig,canUndo,ref}=useStore(),{days}=S,[X,setX]=useExtras(),[det,setDet]=useState(null);
-  const [v,setV]=useState('rot'),[an,setAn]=useState('idle'),[ed,setEd]=useState(null),[menu,setMenu]=useState(false),[chat,setChat]=useState(false),[key,setKey]=useState(false),[toast,setToast]=useState(null),[rt,setRt]=useState(null),[fresh,setFresh]=useState(null);
+  const [v,setV]=useState('rot'),[an,setAn]=useState('idle'),[ed,setEd]=useState(null),[menu,setMenu]=useState(false),[chat,setChat]=useState(false),[key,setKey]=useState(false),[toast,setToast]=useState(null),[rt,setRt]=useState(null),[fresh,setFresh]=useState(null),[imp,setImp]=useState(false),[bk,setBk]=useState(false),[impTxt,setImpTxt]=useState(''),[impErr,setImpErr]=useState('');
   const [msgs,setMsgs]=useState([{r:'ai',x:getCfg().key?'Oi! Peça o que quiser: adicionar, mover, editar ou excluir eventos. Ex: “coloque a foto na placa depois do helicóptero”.':'Oi! Configure a chave do Gemini no menu ⋮ para eu entender qualquer pedido. Sem ela, só sei adicionar eventos de forma simples.'}]),[typing,setTyping]=useState(false),pend=useRef(null),mr=useRef(msgs);mr.current=msgs;
   const tt=(x,u=true)=>{setToast({x,u});setTimeout(()=>setToast(null),4000)};
   const ck2=()=>{ck();setAn('idle')};
@@ -39,6 +39,10 @@ export default function App(){
     upd(p=>({days:nd,wish:p.wish.map(w=>w.k===o?{...w,k:n.ti,name:n.ti}:w)}));setEd(null);if(k)tt(`${k} horário(s) ajustado(s) depois da edição`)};
   const toggleFx=e=>upd(p=>({...p,days:p.days.map(d=>({...d,ev:d.ev.map(x=>x.id===e.id?{...x,fx:isFlex(x)?'fixed':'flex'}:x)}))}));
   const flow=(did,compact)=>{const b=ref.current.days,nd=reflowAll(b,{compact,dayIds:[did]}),k=countChanged(b,nd);if(!k){tt('Nada para ajustar neste dia',false);return}setAn('idle');upd(p=>({...p,days:nd}));tt(`${k} horário(s) ajustado(s)`)};
+  const doImport=()=>{try{const t=impTxt.replace(/```(?:json)?/gi,'').trim(),a=t.search(/[\[{]/),b=Math.max(t.lastIndexOf('}'),t.lastIndexOf(']'));if(a<0||b<a)throw new Error('Não encontrei JSON no texto colado.');
+      const j=JSON.parse(t.slice(a,b+1)),acts=Array.isArray(j)?j:j.actions;if(!Array.isArray(acts)||!acts.length)throw new Error('O JSON não tem a lista "actions".');
+      const before=ref.current.days,nd=reflowAll(applyActions(before,acts),{});if(JSON.stringify(nd)===JSON.stringify(before))throw new Error('Nada mudou. Confira se os ids e os dias (d29, d01…) estão corretos.');
+      setAn('idle');upd(p=>({...p,days:nd}));setImp(false);setImpTxt('');setImpErr('');tt(`${acts.length} ação(ões) aplicada(s)`)}catch(e){setImpErr(e.message)}};
   const toMap=e=>{if(!coordsFor(e.loc)){window.open(gmap(e.loc),'_blank','noopener');return}const d=ref.current.days.find(x=>x.ev.some(y=>y.id===e.id));setRt({day:d.id,ev:e.id,n:Date.now()});setV('rota')};
   const addSim=(p,loc,picked)=>{const ev={id:nid(),t:p.per[0],ti:p.ti+' (novo)',loc,m:picked?4:null,c:picked?casinoTax(loc):0,n:null,s:false};
     upd(S0=>({...S0,days:S0.days.map(x=>{if(x.id!==p.did)return x;const a=[...x.ev],i=a.findIndex(y=>y.t.slice(0,5)>p.per[0].slice(0,5));i<0?a.push(ev):a.splice(i,0,ev);return{...x,ev:a}})}));setAn('idle');
@@ -71,9 +75,17 @@ export default function App(){
     {toast&&<div className="fixed left-4 right-4 z-40 max-w-md mx-auto rounded-3xl bg-lilac text-ink font-extrabold px-4 min-h-12 py-2 flex items-center justify-between gap-2 text-sm" style={{bottom:'calc(100px + env(safe-area-inset-bottom,0px))'}}><span>{toast.x}</span>{toast.u&&<button onClick={()=>{undo();setToast(null)}} className="h-11 px-3 underline shrink-0">Desfazer</button>}</div>}
     {menu&&<Sheet title="Opções" onClose={()=>setMenu(false)}><div className="flex flex-col gap-2 mt-2">
       <button onClick={()=>{setMenu(false);setKey(true)}} className="h-12 rounded-full bg-lilac text-ink font-extrabold">Configurar IA (Gemini){getCfg().key?' ✓':''}</button>
+      <button onClick={()=>{navigator.clipboard?.writeText(exportText(ref.current.days));setMenu(false);tt('Roteiro copiado. Cole no chat do Gemini ou Claude.',false)}} className="h-12 rounded-full bg-sky text-ink font-extrabold">Copiar roteiro para conversar no Gemini/Claude</button>
+      <button onClick={()=>{setMenu(false);setImpErr('');setImp(true)}} className="h-12 rounded-full bg-sky text-ink font-extrabold">Importar do chat (colar JSON)</button>
+      <button onClick={()=>{setMenu(false);setBk(true)}} className="h-12 rounded-full bg-mint text-ink font-extrabold">Backup e restauração</button>
+      <button onClick={()=>{if(confirm('Limpar o cache do app e buscar a versão mais nova? Seus dados e o mapa offline continuam salvos.'))hardUpdate()}} className="h-12 rounded-full bg-peach text-ink font-extrabold">Atualizar app (limpar cache)</button>
       <button onClick={()=>{reset();setAn('idle');setMenu(false);tt('Voltou ao original')}} className="h-12 rounded-full bg-card2 font-extrabold">Voltar ao original</button>
       <button onClick={()=>{saveOrig();setMenu(false);tt('Novo original salvo',false)}} className="h-12 rounded-full bg-pink text-ink font-extrabold">Salvar estado atual como original</button>
-      <p className="text-xs text-mute">Tudo é salvo automaticamente neste aparelho. “Voltar ao original” também pode ser desfeito.</p></div></Sheet>}
+      <p className="text-xs text-mute">Versão do app: {new Date(__BUILD__).toLocaleString('pt-BR')}. Tudo é salvo automaticamente neste aparelho. “Voltar ao original” também pode ser desfeito.</p></div></Sheet>}
+    {bk&&<BackupSheet onClose={()=>setBk(false)} onDefault={()=>{upd(()=>defState());setAn('idle');tt('Padrão do código restaurado')}}/>}
+    {imp&&<Sheet title="Importar do chat" onClose={()=>setImp(false)}><p className="text-xs text-mute mt-2">Cole o bloco JSON que o Gemini ou o Claude gerou. Os horários flexíveis se ajustam sozinhos e dá para desfazer.</p>
+      <textarea value={impTxt} onChange={e=>setImpTxt(e.target.value)} rows={8} placeholder='{"actions":[...]}' aria-label="JSON do chat" className="mt-2 w-full rounded-2xl bg-card2 p-3 text-[14px] text-white outline-none focus:ring-2 ring-lilac font-mono"/>
+      {impErr&&<p className="text-xs text-pink mt-2">{impErr}</p>}<button onClick={doImport} disabled={!impTxt.trim()} className="mt-3 w-full h-12 rounded-full bg-pink text-ink font-extrabold disabled:opacity-40">Aplicar</button></Sheet>}
     {key&&<KeySheet cfg={getCfg()} onClose={()=>setKey(false)} onSave={(k,m)=>{setCfg(k,m);setKey(false);tt('IA configurada',false)}}/>}
     {det&&<Detail e={det} X={X} setX={setX} onClose={()=>setDet(null)}/>}
     {ed&&<EditSheet ed={ed} setEd={setEd} onSave={save}/>}

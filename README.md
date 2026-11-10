@@ -48,3 +48,10 @@ Tudo é salvo no aparelho (localStorage). Menu ⋮: voltar ao original / salvar 
 - Ao **arrastar** um card flexível, ele gruda logo depois do evento anterior + deslocamento (rua + por dentro) e os flexíveis seguintes são empurrados se faltar tempo. Ao **editar** um horário, o card editado fica como está e os flexíveis ao redor se ajustam.
 - Os avisos de conflito (Apertado/Inviável) aparecem **na hora** nos cards, sem precisar tocar em Otimizar.
 - Botão **Ajustar horários** em cada dia: "Resolver conflitos" (empurra só quando falta tempo) ou "Compactar o dia" (elimina buracos). Tudo com Desfazer.
+
+## Atualizar o app e conversar fora do app
+- Menu ⋮ › **Atualizar app (limpar cache)**: remove o cache do app (não apaga seus dados nem o mapa offline) e busca a versão nova. A **versão** (data/hora do build) aparece no mesmo menu para você conferir se atualizou.
+- Menu ⋮ › **Copiar roteiro para conversar no Gemini/Claude**: cola contexto + roteiro (com ids). Decida lá e peça "GERAR"; depois **Importar do chat** e cole o JSON.
+
+## Backup
+Menu ⋮ › **Backup e restauração**: exporta/importa um arquivo JSON com roteiro, modelo salvo, lista, cofre (com anexos, opcional), gastos, contatos, pitches e perfil (a chave do Gemini não entra). Também tem **Restaurar padrão do código**, que troca só o roteiro e a lista pelo padrão do app (desfazível).

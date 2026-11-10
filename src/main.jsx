@@ -3,4 +3,5 @@ import '@fontsource/nunito/600.css';import '@fontsource/nunito/800.css';import '
 import App from './App.jsx';import {registerSW} from 'virtual:pwa-register';
 // OTA: o service worker busca versão nova ao abrir, ao voltar para o app e a cada hora; a nova versão é aplicada sozinha.
 registerSW({immediate:true,onRegisteredSW(_,r){if(!r)return;const chk=()=>r.update().catch(()=>{});setInterval(chk,3600000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')chk()})}});
+if(/[?&]u=/.test(location.search))history.replaceState(null,'',location.pathname);
 createRoot(document.getElementById('root')).render(<App/>);

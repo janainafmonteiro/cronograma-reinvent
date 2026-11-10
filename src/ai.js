@@ -43,3 +43,14 @@ export const analyzeAI=days=>call(`Analise o roteiro dia a dia: ${compact(days)}
 Para CADA evento devolva {"id","time","streetMin","innerMin","status","note"}: time = horário sugerido (igual ao atual se estiver ok); streetMin/innerMin = deslocamento a partir do evento anterior do mesmo dia (o primeiro vem do Treasure Island); status "ok"|"warn"|"bad"; note (até 160 caracteres, só para warn/bad, senão ""). Se houver conflito, mova eventos FLEXÍVEIS; se envolver só eventos FIXOS, mantenha os horários e marque "bad" explicando. Responda {"items":[...]}.`);
 export const followAI=(name,note)=>call(`Escreva uma mensagem curta de LinkedIn (até 60 palavras), em inglês nível B1, simples e simpática, para ${JSON.stringify(name)}, pessoa que Janaina (estudante e SBGL) conheceu no AWS re:Invent. Contexto da conversa (pode estar em português): ${JSON.stringify(note)}. Responda {"message":string}.`);
 export const tipsAI=e=>call(`Dê 5 frases úteis em inglês nível B1 (curtas e simples) com tradução em português para esta situação do re:Invent: ${JSON.stringify({evento:e.ti,local:e.loc,horario:e.t})}. Responda {"tips":[{"en":"","pt":""}]}.`);
+/** Texto para colar no chat do Gemini/Claude: contexto + roteiro atual (com ids) + formato do JSON que o app aceita de volta. */
+export const exportText=days=>`Você é meu assistente de roteiro no AWS re:Invent 2026 (Las Vegas, 28/11 a 05/12). Hotel base: Treasure Island.
+Regras: deslocamento = tempo a pé na rua + "imposto de cassino" de 15 a 20 min para atravessar mega resorts (Venetian, Palazzo, Encore/Wynn, Caesars, MGM, Mandalay Bay, Bellagio, Paris, New York-New York). Eventos FIXOS (sessões, shows, voos, helicóptero, festas) não mudam de horário; FLEXÍVEIS (refeições, Expo, fotos, passeios) podem mudar. Confirme se os lugares que eu citar realmente existem.
+${DAYS}
+Meu roteiro atual (JSON): ${compact(days)}
+Vamos conversar para decidir o melhor horário dos novos eventos. Quando eu escrever "GERAR", responda SOMENTE com um bloco de código JSON no formato {"actions":[...]} usando estes tipos:
+{"type":"add","day":"d01","time":"16:30 – 17:30","title":"","place":"","streetMin":0,"innerMin":0,"swag":false,"afterId":null}
+{"type":"update","id":"","time":"","title":"","place":"","streetMin":0,"innerMin":0}
+{"type":"move","id":"","day":"d01","afterId":null}
+{"type":"delete","id":""}
+Use só ids que existem no roteiro acima.`;
