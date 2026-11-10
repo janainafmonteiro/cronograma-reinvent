@@ -1,7 +1,7 @@
 import {useState,useRef} from 'react';
 import {Undo2,Sparkles,MoreVertical,CalendarDays,ListChecks,MessageCircle,Route,User} from 'lucide-react';
 import {useStore} from './store';import {coordsFor,casinoTax,gmap,nid} from './data';import {getCfg,setCfg,chatAI,analyzeAI} from './ai';
-import Itinerary from './Itinerary';import Wishlist from './Wishlist';import RouteView from './RouteView';import Hub from './Hub';import Detail from './Detail';import {useExtras} from './extras';import {localAnalyze} from './local';import {Sheet,EditSheet,ChatSheet,KeySheet} from './Sheets';
+import Itinerary from './Itinerary';import Wishlist from './Wishlist';import RouteView from './RouteView';import Hub from './Hub';import Detail from './Detail';import {useExtras} from './extras';import {localAnalyze} from './local';import {reflowAll,countChanged,isFlex} from './schedule';import {Sheet,EditSheet,ChatSheet,KeySheet} from './Sheets';
 const dayKeys={domingo:'d29',segunda:'d30',terça:'d01',terca:'d01',quarta:'d02',quinta:'d03',sexta:'d04',sábado:'d28',sabado:'d28'};
 function parse(txt,days){const s=txt.toLowerCase();let did=null;for(const k in dayKeys)if(s.includes(k)){did=dayKeys[k];break}
   const m=s.match(/dia (\d{1,2})/);if(!did&&m){const f=days.find(d=>d.label.includes(' '+m[1].padStart(2,'0')+' '));if(f)did=f.id}
@@ -35,7 +35,10 @@ export default function App(){
   const applyTimes=()=>{upd(p=>({...p,days:p.days.map(d=>({...d,ev:d.ev.map(e=>e.tn&&e.tn!==e.t?{...e,t:e.tn,tn:null}:e)}))}));tt('Horários aplicados')};
   const del=id=>{setAn('idle');upd(p=>({...p,days:p.days.map(d=>({...d,ev:d.ev.filter(e=>e.id!==id)}))}));tt('Card excluído')};
   const save=()=>{const o=ed.old,n={...ed.e,m:ed.e.m===''||ed.e.m==null?null:+ed.e.m,c:+ed.e.c||0};setAn('idle');
-    upd(p=>({days:p.days.map(d=>({...d,ev:d.ev.map(e=>e.id===n.id?{...e,...n}:e)})),wish:p.wish.map(w=>w.k===o?{...w,k:n.ti,name:n.ti}:w)}));setEd(null)};
+    const edited=ref.current.days.map(d=>({...d,ev:d.ev.map(e=>e.id===n.id?{...e,...n}:e)})),nd=reflowAll(edited,{anchorId:n.id}),k=countChanged(edited,nd);
+    upd(p=>({days:nd,wish:p.wish.map(w=>w.k===o?{...w,k:n.ti,name:n.ti}:w)}));setEd(null);if(k)tt(`${k} horário(s) ajustado(s) depois da edição`)};
+  const toggleFx=e=>upd(p=>({...p,days:p.days.map(d=>({...d,ev:d.ev.map(x=>x.id===e.id?{...x,fx:isFlex(x)?'fixed':'flex'}:x)}))}));
+  const flow=(did,compact)=>{const b=ref.current.days,nd=reflowAll(b,{compact,dayIds:[did]}),k=countChanged(b,nd);if(!k){tt('Nada para ajustar neste dia',false);return}setAn('idle');upd(p=>({...p,days:nd}));tt(`${k} horário(s) ajustado(s)`)};
   const toMap=e=>{if(!coordsFor(e.loc)){window.open(gmap(e.loc),'_blank','noopener');return}const d=ref.current.days.find(x=>x.ev.some(y=>y.id===e.id));setRt({day:d.id,ev:e.id,n:Date.now()});setV('rota')};
   const addSim=(p,loc,picked)=>{const ev={id:nid(),t:p.per[0],ti:p.ti+' (novo)',loc,m:picked?4:null,c:picked?casinoTax(loc):0,n:null,s:false};
     upd(S0=>({...S0,days:S0.days.map(x=>{if(x.id!==p.did)return x;const a=[...x.ev],i=a.findIndex(y=>y.t.slice(0,5)>p.per[0].slice(0,5));i<0?a.push(ev):a.splice(i,0,ev);return{...x,ev:a}})}));setAn('idle');
@@ -43,7 +46,7 @@ export default function App(){
     setTimeout(()=>document.querySelector(`[data-eid="${ev.id}"]`)?.scrollIntoView({behavior:'smooth',block:'center'}),250)};
   const send=async q=>{setMsgs(m=>[...m,{r:'me',x:q}]);setTyping(true);
     if(getCfg().key){try{const r=await chatAI(q,mr.current.slice(-6),ref.current.days);
-        if(r.actions?.length){upd(p=>({...p,days:applyActions(p.days,r.actions)}));setAn('idle')}
+        if(r.actions?.length){upd(p=>({...p,days:reflowAll(applyActions(p.days,r.actions),{})}));setAn('idle')}
         setMsgs(m=>[...m,{r:'ai',x:r.reply||'Pronto!'}])}
       catch(e){setMsgs(m=>[...m,{r:'ai',x:'Não consegui falar com o Gemini ('+e.message+'). Tentei os modelos reserva também. Tente de novo em instantes.'}])}
       setTyping(false);return}
@@ -59,7 +62,7 @@ export default function App(){
       {v==='rot'&&<button onClick={analyze} disabled={an==='loading'} className="h-11 px-3 rounded-full bg-pink text-ink font-extrabold text-sm flex items-center gap-1"><Sparkles size={16}/>{an==='loading'?'Analisando…':'Otimizar'}</button>}
       <button aria-label="Mais opções" onClick={()=>setMenu(true)} className="w-11 h-11 rounded-full bg-card text-lilac flex items-center justify-center"><MoreVertical size={20}/></button></header>}
     {v==='rot'&&nSug>0&&an==='done'&&<div className="mx-4 mt-3 rounded-3xl bg-card p-3 flex items-center gap-3 border-2 border-peach"><div className="flex-1 text-sm leading-snug"><b>{nSug}</b> card(s) com horário sugerido pela IA (veja “→” nos cards).</div><button onClick={applyTimes} className="h-11 px-4 rounded-full bg-peach text-ink font-extrabold text-sm">Aplicar</button></div>}
-    {v==='rot'&&<Itinerary days={days} setDays={f=>setS(p=>({...p,days:f(p.days)}))} ck={ck2} an={an} fresh={fresh} onEdit={e=>setEd({old:e.ti,e})} onDel={del} onMap={toMap} onDetail={setDet}/>}
+    {v==='rot'&&<Itinerary days={days} setDays={f=>setS(p=>({...p,days:f(p.days)}))} ck={ck2} an={an} fresh={fresh} onEdit={e=>setEd({old:e.ti,e})} onDel={del} onMap={toMap} onDetail={setDet} onToggleFx={toggleFx} onFlow={flow} onDropped={n=>{if(n>0)tt(`${n} horário(s) ajustado(s) automaticamente`)}}/>}
     {v==='rota'&&<RouteView days={days} target={rt} onDone={()=>setRt(null)}/>}
     {v==='lista'&&<Wishlist S={S} upd={upd}/>}
     {v==='perfil'&&<Hub X={X} setX={setX} days={days}/>}

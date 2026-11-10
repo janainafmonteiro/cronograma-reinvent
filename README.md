@@ -42,3 +42,9 @@ Tudo é salvo no aparelho (localStorage). Menu ⋮: voltar ao original / salvar 
 ## Offline
 - Aba **Rota** › botão **Offline** (topo): salva o mapa da região (Strip, Allegiant, aeroporto) e o caminho a pé de todos os trechos do roteiro atual. Refaça se mudar o roteiro.
 - O botão **Mapa** do card abre a Rota já no trecho que termina naquele evento.
+
+## Horários automáticos (sem IA)
+- Cada card é **fixo** (cadeado) ou **flexível**. Sessões, shows, voos etc. são fixos por padrão; refeições, Expo, fotos e passeios são flexíveis. Dá para trocar no card expandido ou na edição.
+- Ao **arrastar** um card flexível, ele gruda logo depois do evento anterior + deslocamento (rua + por dentro) e os flexíveis seguintes são empurrados se faltar tempo. Ao **editar** um horário, o card editado fica como está e os flexíveis ao redor se ajustam.
+- Os avisos de conflito (Apertado/Inviável) aparecem **na hora** nos cards, sem precisar tocar em Otimizar.
+- Botão **Ajustar horários** em cada dia: "Resolver conflitos" (empurra só quando falta tempo) ou "Compactar o dia" (elimina buracos). Tudo com Desfazer.
