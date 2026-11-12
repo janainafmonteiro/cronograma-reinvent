@@ -1,6 +1,6 @@
 import {useState,useRef} from 'react';
 import {Undo2,Sparkles,MoreVertical,CalendarDays,ListChecks,MessageCircle,Route,User} from 'lucide-react';
-import {useStore} from './store';import {coordsFor,casinoTax,gmap,nid,defState} from './data';import BackupSheet from './BackupSheet';import {getCfg,setCfg,chatAI,analyzeAI,exportText} from './ai';import {hardUpdate} from './update';
+import {useStore} from './store';import {coordsFor,casinoTax,gmap,nid,defState,match} from './data';import BackupSheet from './BackupSheet';import {getCfg,setCfg,chatAI,analyzeAI,exportText} from './ai';import {hardUpdate} from './update';
 import Itinerary from './Itinerary';import Wishlist from './Wishlist';import RouteView from './RouteView';import Hub from './Hub';import Detail from './Detail';import {useExtras} from './extras';import {localAnalyze} from './local';import {reflowAll,countChanged,isFlex} from './schedule';import {Sheet,EditSheet,ChatSheet,KeySheet} from './Sheets';
 const dayKeys={domingo:'d29',segunda:'d30',terça:'d01',terca:'d01',quarta:'d02',quinta:'d03',sexta:'d04',sábado:'d28',sabado:'d28'};
 function parse(txt,days){const s=txt.toLowerCase();let did=null;for(const k in dayKeys)if(s.includes(k)){did=dayKeys[k];break}
@@ -37,6 +37,7 @@ export default function App(){
   const save=()=>{const o=ed.old,n={...ed.e,m:ed.e.m===''||ed.e.m==null?null:+ed.e.m,c:+ed.e.c||0};setAn('idle');
     const edited=ref.current.days.map(d=>({...d,ev:d.ev.map(e=>e.id===n.id?{...e,...n}:e)})),nd=reflowAll(edited,{anchorId:n.id}),k=countChanged(edited,nd);
     upd(p=>({days:nd,wish:p.wish.map(w=>w.k===o?{...w,k:n.ti,name:n.ti}:w)}));setEd(null);if(k)tt(`${k} horário(s) ajustado(s) depois da edição`)};
+  const toggleDone=e=>upd(p=>{const w=p.wish.find(x=>match(x,e)),done=!(w&&w.done);return{...p,wish:w?p.wish.map(x=>x.id===w.id?{...x,done,doneAt:done?Date.now():null}:x):[...p.wish,{id:nid(),name:e.ti,k:e.ti,p:'want',done,doneAt:Date.now(),man:true}]}});
   const toggleFx=e=>upd(p=>({...p,days:p.days.map(d=>({...d,ev:d.ev.map(x=>x.id===e.id?{...x,fx:isFlex(x)?'fixed':'flex'}:x)}))}));
   const flow=(did,compact)=>{const b=ref.current.days,nd=reflowAll(b,{compact,dayIds:[did]}),k=countChanged(b,nd);if(!k){tt('Nada para ajustar neste dia',false);return}setAn('idle');upd(p=>({...p,days:nd}));tt(`${k} horário(s) ajustado(s)`)};
   const doImport=()=>{try{const t=impTxt.replace(/```(?:json)?/gi,'').trim(),a=t.search(/[\[{]/),b=Math.max(t.lastIndexOf('}'),t.lastIndexOf(']'));if(a<0||b<a)throw new Error('Não encontrei JSON no texto colado.');
@@ -66,7 +67,7 @@ export default function App(){
       {v==='rot'&&<button onClick={analyze} disabled={an==='loading'} className="h-11 px-3 rounded-full bg-pink text-ink font-extrabold text-sm flex items-center gap-1"><Sparkles size={16}/>{an==='loading'?'Analisando…':'Otimizar'}</button>}
       <button aria-label="Mais opções" onClick={()=>setMenu(true)} className="w-11 h-11 rounded-full bg-card text-lilac flex items-center justify-center"><MoreVertical size={20}/></button></header>}
     {v==='rot'&&nSug>0&&an==='done'&&<div className="mx-4 mt-3 rounded-3xl bg-card p-3 flex items-center gap-3 border-2 border-peach"><div className="flex-1 text-sm leading-snug"><b>{nSug}</b> card(s) com horário sugerido pela IA (veja “→” nos cards).</div><button onClick={applyTimes} className="h-11 px-4 rounded-full bg-peach text-ink font-extrabold text-sm">Aplicar</button></div>}
-    {v==='rot'&&<Itinerary days={days} setDays={f=>setS(p=>({...p,days:f(p.days)}))} ck={ck2} an={an} fresh={fresh} onEdit={e=>setEd({old:e.ti,e})} onDel={del} onMap={toMap} onDetail={setDet} onToggleFx={toggleFx} onFlow={flow} onDropped={n=>{if(n>0)tt(`${n} horário(s) ajustado(s) automaticamente`)}}/>}
+    {v==='rot'&&<Itinerary days={days} setDays={f=>setS(p=>({...p,days:f(p.days)}))} ck={ck2} an={an} fresh={fresh} onEdit={e=>setEd({old:e.ti,e})} onDel={del} onMap={toMap} onDetail={setDet} onToggleFx={toggleFx} wish={S.wish} onToggleDone={toggleDone} onFlow={flow} onDropped={n=>{if(n>0)tt(`${n} horário(s) ajustado(s) automaticamente`)}}/>}
     {v==='rota'&&<RouteView days={days} target={rt} onDone={()=>setRt(null)}/>}
     {v==='lista'&&<Wishlist S={S} upd={upd}/>}
     {v==='perfil'&&<Hub X={X} setX={setX} days={days}/>}

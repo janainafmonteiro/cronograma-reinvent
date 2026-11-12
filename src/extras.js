@@ -1,11 +1,13 @@
 import {useState,useEffect} from 'react';import {nid} from './data';
 export const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const V=(title,cat,ev=null,note='')=>({id:nid(),title,cat,note,ev,files:[]});
+const C=(text,cat)=>({id:nid(),text,cat,done:false});
 const T=(term,pt,ex)=>({id:nid(),term,pt,ex});
 const seeds=()=>({
  vault:[V('Voo de ida','voo','Chegada em Las Vegas','Anote voo, portão e horário de cada trecho.'),V('Conexão no Rio','voo',null,'Cartão de embarque, terminal e tempo de conexão.'),V('Conexão em Miami','voo',null,'Imigração, terminal e tempo de conexão.'),V('Voo de volta','voo','Voo de volta'),
   V('Voucher Treasure Island','hotel','Check-in e almoço','Número da reserva e nome no voucher.'),V('Ingresso The Sphere','ingresso','The Sphere · Wizard of Oz','Setor, fila e assento.'),V('Ingresso do helicóptero','ingresso','Helicóptero noturno','Ponto de encontro e horário de check-in.'),V('Passaporte, ESTA/visto e seguro','outro')],
- spend:{limit:100,items:[]},people:[],
+ check:[C('Passaporte válido','Documentos'),C('ESTA ou visto','Documentos'),C('Seguro viagem','Documentos'),C('Cartões e dólares em espécie','Dinheiro'),C('Avisar o banco sobre a viagem','Dinheiro'),C('Adaptador de tomada (EUA)','Tecnologia'),C('Carregador e power bank','Tecnologia'),C('eSIM ou chip internacional','Tecnologia'),C('Remédios pessoais','Saúde'),C('Protetor solar e hidratante','Saúde'),C('Casaco leve para a noite','Bagagem'),C('Calçado confortável','Bagagem'),C('Garrafa de água reutilizável','Bagagem')],
+ people:[],
  pitches:[
   {id:nid(),title:'Apresentação (30 segundos)',text:'Hi, I’m Janaina. I’m a student and an SBGL. I like to build projects on AWS and help other students learn cloud. Nice to meet you! What do you do?',pt:'Use ao conhecer alguém.'},
   {id:nid(),title:'ProDrafts.tech (arquitetura)',text:'ProDrafts.tech is [what it is] for [who uses it]. I built it with [AWS services]. The frontend is [technology] and the backend is [technology]. The hardest part was [challenge], so I [solution]. Next, I want to [next step].',pt:'Preencha os [colchetes] com os seus detalhes reais.'},

@@ -1,7 +1,7 @@
 import {useState,useEffect,useMemo,useRef} from 'react';
 import {DndContext,DragOverlay,PointerSensor,useSensor,useSensors,closestCenter,useDroppable} from '@dnd-kit/core';
 import {SortableContext,verticalListSortingStrategy,arrayMove} from '@dnd-kit/sortable';
-import {Clock} from 'lucide-react';import {SortableCard,CardView} from './Card';import {Sheet} from './Sheets';import {conflicts,reflowAll,countChanged} from './schedule';
+import {Clock} from 'lucide-react';import {SortableCard,CardView} from './Card';import {Sheet} from './Sheets';import {conflicts,reflowAll,countChanged} from './schedule';import {isExp,match} from './data';
 function Day({d,onAdjust,children}){
   const {setNodeRef}=useDroppable({id:d.id});
   return <section id={d.id} data-day={d.id} className="pt-4" style={{scrollMarginTop:128}}>
@@ -12,10 +12,11 @@ function Day({d,onAdjust,children}){
         {d.ev.length===0&&<div className="rounded-3xl border-2 border-dashed border-card2 text-mute text-sm text-center py-5">Solte um card aqui</div>}</div>
     </SortableContext></section>;
 }
-export default function Itinerary({days,setDays,ck,an,fresh,onEdit,onDel,onMap,onDetail,onToggleFx,onFlow,onDropped}){
+export default function Itinerary({days,setDays,ck,an,fresh,onEdit,onDel,onMap,onDetail,onToggleFx,onFlow,onDropped,wish=[],onToggleDone}){
   const [open,setOpen]=useState(null),[act,setAct]=useState(null),[cur,setCur]=useState(days[0].id),[adj,setAdj]=useState(null),start=useRef(null);
   const sensors=useSensors(useSensor(PointerSensor,{activationConstraint:{distance:4}}));
   const cf=useMemo(()=>Object.assign({},...days.map(d=>conflicts(d.ev))),[days]);
+  const doneIds=useMemo(()=>new Set(days.flatMap(d=>d.ev).filter(e=>wish.some(w=>w.done&&match(w,e))).map(e=>e.id)),[days,wish]);
   const find=id=>days.find(d=>d.id===id||d.ev.some(e=>e.id===id));
   const pos=(ds,id)=>{for(const d of ds){const i=d.ev.findIndex(e=>e.id===id);if(i>=0)return d.id+':'+i}return null};
   useEffect(()=>{const io=new IntersectionObserver(es=>{const v=es.filter(x=>x.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top)[0];if(v)setCur(v.target.dataset.day)},{rootMargin:'-120px 0px -70% 0px'});
@@ -33,7 +34,7 @@ export default function Itinerary({days,setDays,ck,an,fresh,onEdit,onDel,onMap,o
       {days.map(d=><button key={d.id} onClick={()=>document.getElementById(d.id).scrollIntoView({behavior:'smooth'})} className={`shrink-0 h-10 px-4 rounded-full text-sm font-extrabold ${cur===d.id?'bg-pink text-ink':'bg-card text-lilac'}`}>{d.label.slice(0,6)}</button>)}</nav>
     <p className="px-4 pt-2 text-xs text-mute"><span className="rounded-full bg-pink text-ink px-1.5 py-0.5 font-extrabold text-[10px]">SWAG</span> Brilho rosa = brindes. Arraste pela alça: os horários flexíveis se ajustam sozinhos; o cadeado marca horário fixo.</p>
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={e=>{ck();setAct(e.active.id);start.current=pos(days,e.active.id)}} onDragOver={over} onDragEnd={end} onDragCancel={()=>setAct(null)}>
-      <main className="px-4">{days.map(d=><Day key={d.id} d={d} onAdjust={()=>setAdj(d)}>{d.ev.map(e=><SortableCard key={e.id} e={e} an={an} cf={cf[e.id]} fresh={fresh===e.id} open={open===e.id} onToggle={()=>setOpen(open===e.id?null:e.id)} onEdit={()=>onEdit(e)} onDel={()=>onDel(e.id)} onMap={()=>onMap(e)} onDetail={()=>onDetail(e)} onToggleFx={()=>onToggleFx(e)}/>)}</Day>)}</main>
+      <main className="px-4">{days.map(d=><Day key={d.id} d={d} onAdjust={()=>setAdj(d)}>{d.ev.map(e=><SortableCard key={e.id} e={e} an={an} cf={cf[e.id]} fresh={fresh===e.id} open={open===e.id} onToggle={()=>setOpen(open===e.id?null:e.id)} onEdit={()=>onEdit(e)} onDel={()=>onDel(e.id)} onMap={()=>onMap(e)} onDetail={()=>onDetail(e)} onToggleFx={()=>onToggleFx(e)} exp={isExp(e)} isDone={doneIds.has(e.id)} onToggleDone={()=>onToggleDone(e)}/>)}</Day>)}</main>
       <DragOverlay>{ae&&<CardView e={ae} an={an} handle={{}} style={{transform:'rotate(2deg)'}}/>}</DragOverlay>
     </DndContext>
     {adj&&<Sheet title={`Ajustar ${adj.label}`} onClose={()=>setAdj(null)}><div className="flex flex-col gap-3 mt-3">

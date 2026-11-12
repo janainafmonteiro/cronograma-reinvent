@@ -51,8 +51,12 @@ const raw=[
 ['08:00 – 09:30','Café da manhã e check-out','Treasure Island',0,0,['bad','O voo das 12:00 exige sair do hotel às 09:15–09:30. Faça check-out às 08:30.']],
 ['12:00','Voo de volta','Aeroporto LAS',25,0]]],
 ['d05','Sáb 05 Dez',[]]];
+const EXP=/mixer|reception|welcome|women|sbg|speed|happy|festa|play|sphere|helic|placa|coca|bellagio|magic|\brun\b|5k|escape|byte|latam|jantar|networking|focus group/i;
+/** Entra na lista de experiências? (edite no card para mudar) */
+export const isExp=e=>e.exp!=null?e.exp:EXP.test(e.ti);
+export const TRIP=Object.fromEntries(['2026-11-28','2026-11-29','2026-11-30','2026-12-01','2026-12-02','2026-12-03','2026-12-04','2026-12-05'].map((d,i)=>[d,['d28','d29','d30','d01','d02','d03','d04','d05'][i]]));
 export const mk=e=>({id:nid(),t:e[0],ti:e[1],loc:e[2],m:e[3],c:e[4],n:e[5]||null,s:SW.includes(e[1])});
 export const init=()=>raw.map(d=>({id:d[0],label:d[1],ev:d[2].map(mk)}));
-export const defState=()=>{const days=init(),seen=new Set(),wish=[];days.forEach(d=>d.ev.forEach(e=>{if(!seen.has(e.ti)){seen.add(e.ti);wish.push({id:nid(),name:e.ti,k:e.ti,p:PR[e.ti]||'want'})}}));return{days,wish}};
+export const defState=()=>{const days=init(),seen=new Set(),wish=[];days.forEach(d=>d.ev.forEach(e=>{if(isExp(e)&&!seen.has(e.ti)){seen.add(e.ti);wish.push({id:nid(),name:e.ti,k:e.ti,p:PR[e.ti]||'want',done:false})}}));return{days,wish}};
 export const match=(w,e)=>nrm(e.ti+' '+e.loc).includes(nrm(w.k));
 export const gmap=l=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(l+' Las Vegas');

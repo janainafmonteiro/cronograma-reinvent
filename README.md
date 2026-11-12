@@ -55,3 +55,12 @@ Tudo é salvo no aparelho (localStorage). Menu ⋮: voltar ao original / salvar 
 
 ## Backup
 Menu ⋮ › **Backup e restauração**: exporta/importa um arquivo JSON com roteiro, modelo salvo, lista, cofre (com anexos, opcional), gastos, contatos, pitches e perfil (a chave do Gemini não entra). Também tem **Restaurar padrão do código**, que troca só o roteiro e a lista pelo padrão do app (desfazível).
+
+## Lista de experiências e calculadora
+- **Lista** = só experiências (convites, happy hour, passeios e atrações). Sessões, chalk talks, keynote, Expo, chegada, check-in e voos ficam de fora. Para mudar um card, marque/desmarque "Entra na lista de experiências" na edição.
+- Deslize um item para a **direita** para concluir (para a esquerda desfaz). Concluir vale para a viagem toda: os cards equivalentes em outros dias ficam com "FEITO", e o app oferece remover do roteiro para liberar o horário.
+- **Eu › Calculadora**: preço + taxa de venda de Las Vegas (8,375%, editável) + gorjeta (15/18/20/25% ou personalizada) + câmbio (atualiza pela internet ou digite) + taxas do cartão. A tela de Gastos foi removida.
+
+## Clima e checklist
+- **Eu › Clima**: previsão de Las Vegas (Open-Meteo, ~16 dias à frente) por dia da viagem, com °C/°F, chuva, vento, dica de roupa e vento no horário do helicóptero. Fica salva para ver offline.
+- **Eu › Checklist antes de viajar**: "Prontidão offline" (app instalado, mapa/rotas, cofre, backup, clima, chave Gemini) + lista sua (adicionar/editar/excluir/marcar) + Exportar (copia a lista com instruções) e Importar (cola o JSON da IA).

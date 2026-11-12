@@ -1,0 +1,27 @@
+import {useState} from 'react';import {RefreshCw} from 'lucide-react';
+const CATS=[['compras','Compras',true,false],['rest','Restaurante/bar',true,true],['transp','Uber/transporte',false,true],['serv','Serviço (só gorjeta)',false,true]];
+const ld=()=>{try{return JSON.parse(localStorage.getItem('rv26c'))||{}}catch{return {}}};
+const f2=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const inp='mt-1 w-full h-12 rounded-2xl bg-card2 px-3 text-[16px] text-white outline-none focus:ring-2 ring-lilac';
+export default function Calc(){
+  const [s,setS]=useState(()=>({tax:8.375,rate:'',rateDate:'',card:'',tip:18,cat:'rest',after:false,...ld()})),[price,setPrice]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
+  const set=p=>setS(x=>{const n={...x,...p};try{localStorage.setItem('rv26c',JSON.stringify(n))}catch{}return n});
+  const c=CATS.find(x=>x[0]===s.cat),p=parseFloat(String(price).replace(',','.'))||0,tax=c[2]?p*(+s.tax||0)/100:0,tip=c[3]?(s.after?p+tax:p)*(+s.tip||0)/100:0,total=p+tax+tip,rate=parseFloat(String(s.rate).replace(',','.'))||0,brl=total*rate*(1+(parseFloat(String(s.card).replace(',','.'))||0)/100);
+  const upd=async()=>{setBusy(true);setMsg('');for(const u of ['https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL','https://api.frankfurter.app/latest?from=USD&to=BRL']){try{const r=await fetch(u),j=await r.json();if(j.rates?.BRL){set({rate:String(j.rates.BRL),rateDate:j.date});setBusy(false);return}}catch{}}setMsg('Sem internet ou câmbio indisponível. Digite a cotação à mão.');setBusy(false)};
+  const row=(l,v,b)=><div className={`flex justify-between py-1 ${b?'text-lg font-extrabold':'text-sm'}`}><span className={b?'':'text-mute'}>{l}</span><span>{v}</span></div>;
+  return <div className="flex flex-col gap-3">
+    <div className="rounded-3xl bg-card p-4"><label className="block text-xs font-bold text-mute">Preço da etiqueta ou do cardápio (US$)<input autoFocus value={price} onChange={e=>setPrice(e.target.value)} inputMode="decimal" placeholder="0,00" className="mt-1 w-full h-14 rounded-2xl bg-card2 px-3 text-2xl font-extrabold text-white outline-none focus:ring-2 ring-lilac"/></label>
+      <div className="flex flex-wrap gap-2 mt-3">{CATS.map(k=><button key={k[0]} onClick={()=>set({cat:k[0]})} className={`h-11 px-3 rounded-full text-sm font-extrabold ${s.cat===k[0]?'bg-pink text-ink':'bg-card2 text-lilac'}`}>{k[1]}</button>)}</div>
+      {c[3]&&<><div className="text-xs font-bold text-mute mt-3">Gorjeta</div><div className="flex flex-wrap gap-2 mt-1">{[15,18,20,25].map(t=><button key={t} onClick={()=>set({tip:t})} className={`h-11 px-4 rounded-full text-sm font-extrabold ${+s.tip===t?'bg-peach text-ink':'bg-card2 text-lilac'}`}>{t}%</button>)}
+        <input aria-label="Gorjeta personalizada (%)" value={s.tip} onChange={e=>set({tip:e.target.value})} inputMode="decimal" className="w-20 h-11 rounded-full bg-card2 px-3 text-[16px] text-white text-center"/></div>
+        <label className="flex items-center gap-3 mt-2 min-h-11 text-sm font-bold"><input type="checkbox" checked={s.after} onChange={e=>set({after:e.target.checked})} className="w-6 h-6 accent-pink"/>Calcular gorjeta sobre o valor com taxa</label></>}</div>
+    <div className="rounded-3xl bg-card p-4">{row('Valor',`US$ ${f2(p)}`)}{c[2]&&row(`Taxa de venda (${s.tax}%)`,`US$ ${f2(tax)}`)}{c[3]&&row(`Gorjeta (${s.tip||0}%)`,`US$ ${f2(tip)}`)}
+      <div className="border-t border-card2 mt-1 pt-1">{row('Total em dólar',`US$ ${f2(total)}`,true)}{row('Total em reais',rate?`R$ ${f2(brl)}`:'informe o câmbio',true)}</div>
+      {c[2]&&<p className="text-xs text-mute mt-2">A taxa de venda não aparece na etiqueta: é somada ao pagar.</p>}</div>
+    <div className="rounded-3xl bg-card p-4"><div className="font-extrabold text-peach">Ajustes</div>
+      <div className="flex gap-2"><label className="flex-1 text-xs font-bold text-mute">Câmbio (R$ por US$)<input value={s.rate} onChange={e=>set({rate:e.target.value})} inputMode="decimal" className={inp}/></label><label className="flex-1 text-xs font-bold text-mute">Taxas do cartão (%)<input value={s.card} onChange={e=>set({card:e.target.value})} inputMode="decimal" placeholder="IOF, spread…" className={inp}/></label></div>
+      <button onClick={upd} disabled={busy} className="mt-2 w-full h-12 rounded-full bg-lilac text-ink font-extrabold flex items-center justify-center gap-1 disabled:opacity-60"><RefreshCw size={16} className={busy?'animate-spin':''}/>{busy?'Buscando…':'Atualizar câmbio'}</button>
+      <p className="text-xs text-mute mt-2">{s.rateDate?`Cotação de referência de ${s.rateDate.split('-').reverse().join('/')}. `:''}{msg||'O valor real no seu cartão ou no Wise pode diferir: use o campo de taxas para aproximar.'}</p>
+      <label className="block text-xs font-bold text-mute mt-3">Taxa de venda (%)<input value={s.tax} onChange={e=>set({tax:e.target.value})} inputMode="decimal" className={inp}/></label>
+      <p className="text-xs text-mute mt-1">Las Vegas (Clark County): 8,375% em 2026. Coloque 0 para itens isentos.</p></div>
+    <div className="rounded-3xl bg-card2 p-4 text-xs text-mute leading-relaxed"><b className="text-peach">Gorjetas comuns nos EUA</b> (não é regra): restaurante 15–20%, bar US$ 1–2 por bebida, Uber/táxi 15–20%, camareira US$ 3–5 por dia. Em grupos grandes a gorjeta às vezes já vem na conta: confira antes de somar.</div></div>}
